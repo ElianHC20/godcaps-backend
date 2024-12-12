@@ -3,7 +3,15 @@ const cors = require('cors');
 const axios = require('axios');
 const app = express();
 
-// Configuración de CORS antes de cualquier ruta
+// Configuración de CORS
+app.use(cors({
+    origin: ['https://cardenascompany.io', 'http://127.0.0.1:5501'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true
+}));
+
+// Middleware para headers adicionales de CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -22,6 +30,12 @@ app.use(express.json());
 // Configuración de Bold
 const BOLD_API_KEY = '_rwNxehv700w7y1Dsr5UE4ADEZKE7AgtTUC5vHRS17g';
 const BOLD_API_URL = 'https://integrations.api.bold.co';
+
+// Middleware para logging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
 
 // Ruta de prueba
 app.get('/api/test', (req, res) => {
@@ -70,6 +84,20 @@ app.get('/api/check-payment/:paymentLink', async (req, res) => {
             details: error.response?.data || 'Error desconocido'
         });
     }
+});
+
+// Manejo de errores global
+app.use((err, req, res, next) => {
+    console.error('Error no manejado:', err);
+    res.status(500).json({
+        error: 'Error interno del servidor',
+        details: process.env.NODE_ENV === 'development' ? err.message : 'Error interno'
+    });
+});
+
+// Manejo de rutas no encontradas
+app.use((req, res) => {
+    res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
 module.exports = app;

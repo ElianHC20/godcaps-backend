@@ -3,13 +3,19 @@ const cors = require('cors');
 const axios = require('axios');
 const app = express();
 
-// Configuración de CORS
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
+// Configuración de CORS antes de cualquier ruta
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Manejar las solicitudes OPTIONS (preflight)
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 app.use(express.json());
 
@@ -18,10 +24,6 @@ const BOLD_API_KEY = '_rwNxehv700w7y1Dsr5UE4ADEZKE7AgtTUC5vHRS17g';
 const BOLD_API_URL = 'https://integrations.api.bold.co';
 
 // Ruta de prueba
-app.get('/', (req, res) => {
-    res.json({ message: 'API funcionando correctamente' });
-});
-
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API funcionando correctamente' });
 });
@@ -69,13 +71,5 @@ app.get('/api/check-payment/:paymentLink', async (req, res) => {
         });
     }
 });
-
-// Para desarrollo local
-if (require.main === module) {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Servidor ejecutándose en puerto ${PORT}`);
-    });
-}
 
 module.exports = app;
